@@ -1,16 +1,16 @@
 package migrations
 
 import (
-	"gorm.io/gorm"
+	"mindgames/internal/domain"
 
-	"mindgames/internal/model"
+	"gorm.io/gorm"
 )
 
 func Run(db *gorm.DB) error {
-	if err := db.AutoMigrate(&model.User{}); err != nil {
+	if err := db.AutoMigrate(&domain.User{}); err != nil {
 		return err
 	}
-	if err := db.AutoMigrate(&model.RefreshToken{}); err != nil {
+	if err := db.AutoMigrate(&domain.RefreshToken{}); err != nil {
 		return err
 	}
 
