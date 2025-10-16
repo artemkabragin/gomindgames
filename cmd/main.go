@@ -1,29 +1,31 @@
 package main
 
 import (
-	"log"
 	"mindgames/internal/controller"
-	"mindgames/internal/migrations"
-
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"mindgames/internal/repository"
+	"os"
 )
 
 func main() {
-	// Initialize database before starting the server
-	dsn := "host=localhost user=artembragin password=1337 dbname=auth_database port=5432 sslmode=disable"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		log.Fatalf("can't connect to database: %v", err)
-	}
-
-	log.Println("Connected to database ", db.Table("users") != nil)
-
-	if err := migrations.Run(db); err != nil {
-		log.Fatalf("can't run migrations: %v", err)
-	}
-
+	var db = repository.NewGormDB(
+		repository.Config{
+			Host:     getEnvOrDefault("DB_HOST", "localhost"),
+			Port:     getEnvOrDefault("DB_PORT", "5432"),
+			Username: getEnvOrDefault("DB_USER", "artembragin"),
+			Password: getEnvOrDefault("DB_PASSWORD", "1337"),
+			DBName:   getEnvOrDefault("DB_NAME", "auth_database"),
+			SSLMode:  getEnvOrDefault("DB_SSLMODE", "disable"),
+		},
+	)
 	_ = controller.NewController(controller.ControllerOptions{
 		DB: db,
 	})
+}
+
+func getEnvOrDefault(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }

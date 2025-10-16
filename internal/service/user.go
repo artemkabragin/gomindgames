@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"mindgames/internal/domain"
 	"mindgames/internal/repository"
@@ -20,6 +21,11 @@ func UserService(repo repository.IUserRepository) *UserServiceImpl {
 }
 
 func (s *UserServiceImpl) Create(user *domain.User, password string) error {
+	err := s.validateRegister(user, password)
+	if err != nil {
+		return fmt.Errorf("error validate register: %w", err)
+	}
+
 	if user.ID == uuid.Nil {
 		user.ID = uuid.New()
 	}
@@ -41,4 +47,18 @@ func (s *UserServiceImpl) Create(user *domain.User, password string) error {
 func (s *UserServiceImpl) GetByUsername(username string) (*domain.User, error) {
 	user, err := s.repo.GetByUsername(username)
 	return user, err
+}
+
+// Private Methods
+
+func (s *UserServiceImpl) validateRegister(user *domain.User, password string) error {
+	if user.Username == "" {
+		return errors.New("username is required")
+	}
+
+	if password == "" {
+		return errors.New("password is incorrect")
+	}
+
+	return nil
 }
