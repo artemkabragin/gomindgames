@@ -17,20 +17,16 @@ type ControllerOptions struct {
 type Controller struct {
 	db          *gorm.DB
 	userService service.IUserService
-	//server        *pkg.Server
 	userHandler handler.IUserHandler
 }
 
 func NewController(opts ControllerOptions) *Controller {
-	//var userRepo repository.IUserRepository
-
 	userRepo := repository.UserRepo(opts.DB)
 	tokenRepo := repository.NewTokenRepository(opts.DB)
 
 	userService := service.UserService(userRepo)
 	tokenService := service.TokenService(tokenRepo)
 
-	//bookHandler := handler.NewBookHandler(bookService)
 	userHandler := handler.NewUserHandler(userService, tokenService)
 	testHandler := handler.TestHandler()
 
@@ -45,11 +41,6 @@ func NewController(opts ControllerOptions) *Controller {
 	if err != nil {
 		return nil
 	}
-
-	//server := pkg.NewServer()
-
-	//deliveryRouter := handler.NewRouter(bookHandler, userHandler)
-	//deliveryRouter.RegisterRoutes(server.GetRouter())
 
 	return &Controller{
 		db:          opts.DB,
