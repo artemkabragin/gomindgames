@@ -37,7 +37,7 @@ func NewController(opts ControllerOptions) *Controller {
 	e.POST("/auth/refresh", userHandler.PostRefresh)
 	e.GET("/getTest", testHandler.GetTest)
 
-	err := e.Start("localhost:8081")
+	err := e.Start("0.0.0.0:8081")
 	if err != nil {
 		return nil
 	}
