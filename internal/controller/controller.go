@@ -19,21 +19,21 @@ type ControllerOptions struct {
 type Controller struct {
 	db          *gorm.DB
 	kafkaClient kafka.IKafkaClient
-	userService service.IUserService
-	userHandler handler.IUserHandler
+	userService service.UserService
+	userHandler handler.UserHandler
 }
 
 func NewController(opts ControllerOptions) *Controller {
-	userRepo := repository.UserRepo(opts.DB)
+	userRepo := repository.NewUserRepository(opts.DB)
 	tokenRepo := repository.NewTokenRepository(opts.DB)
 
 	eventProducer := kafka.NewEventProducer(opts.KafkaClient)
 
-	userService := service.UserService(userRepo, eventProducer)
-	tokenService := service.TokenService(tokenRepo)
+	userService := service.NewUserService(userRepo, eventProducer)
+	tokenService := service.NewTokenService(tokenRepo)
 
 	userHandler := handler.NewUserHandler(userService, tokenService)
-	testHandler := handler.TestHandler()
+	testHandler := handler.NewTestHandler()
 
 	e := initEcho()
 

@@ -24,7 +24,7 @@ func main() {
 
 	kafkaConfig := kafka.KafkaConfig{
 		Brokers: strings.Split(getEnvOrDefault("KAFKA_BROKERS", "kafka:9091"), ","),
-		Topic:   getEnvOrDefault("KAFKA_TOPIC", "uesr-events"),
+		Topic:   getEnvOrDefault("KAFKA_TOPIC", "user-events"),
 		GroupID: getEnvOrDefault("KAFKA_GROUP_ID", "user-service"),
 	}
 

@@ -13,11 +13,11 @@ import (
 )
 
 type UserServiceImpl struct {
-	repo          repository.IUserRepository
-	eventProducer kafka.IEventProducer
+	repo          repository.UserRepository
+	eventProducer kafka.EventProducer
 }
 
-func UserService(repo repository.IUserRepository, eventProducer kafka.IEventProducer) *UserServiceImpl {
+func NewUserService(repo repository.UserRepository, eventProducer kafka.EventProducer) *UserServiceImpl {
 	return &UserServiceImpl{
 		repo,
 		eventProducer,

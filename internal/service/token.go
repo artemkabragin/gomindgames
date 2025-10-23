@@ -12,10 +12,10 @@ import (
 )
 
 type TokenServiceImpl struct {
-	r repository.ITokenRepository
+	r repository.TokenRepository
 }
 
-func TokenService(repo repository.ITokenRepository) *TokenServiceImpl {
+func NewTokenService(repo repository.TokenRepository) *TokenServiceImpl {
 	return &TokenServiceImpl{
 		repo,
 	}

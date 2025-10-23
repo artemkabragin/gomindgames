@@ -3,17 +3,12 @@ package kafka
 import (
 	"encoding/json"
 	"fmt"
-	"mindgames/internal/domain"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type EventType string
-
-const (
-	UserCreated EventType = "user.created"
-)
 
 type Event struct {
 	ID        string      `json:"id"`
@@ -29,16 +24,6 @@ func NewEvent(eventType EventType, payload interface{}) Event {
 		Timestamp: time.Now(),
 		Payload:   payload,
 	}
-}
-
-type UserEvent struct {
-	User domain.User `json:"user"`
-}
-
-type LoginEvent struct {
-	UserID    uuid.UUID `json:"user_id"`
-	Username  string    `json:"username"`
-	Timestamp time.Time `json:"timestamp"`
 }
 
 func (e *Event) Serialize() ([]byte, error) {

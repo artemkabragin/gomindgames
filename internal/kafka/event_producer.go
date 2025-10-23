@@ -7,30 +7,27 @@ import (
 	"mindgames/internal/domain"
 )
 
-type IEventProducer interface {
+type EventProducer interface {
 	PublishCreateUser(ctx context.Context, user *domain.User) error
 }
 
-type EventProducer struct {
+type EventProducerImpl struct {
 	client IKafkaClient
 }
 
-func NewEventProducer(client IKafkaClient) IEventProducer {
-	return &EventProducer{
+func NewEventProducer(client IKafkaClient) *EventProducerImpl {
+	return &EventProducerImpl{
 		client: client,
 	}
 }
 
-func (p *EventProducer) PublishCreateUser(ctx context.Context, user *domain.User) error {
+func (p *EventProducerImpl) PublishCreateUser(ctx context.Context, user *domain.User) error {
 	payload := UserEvent{
 		User: *user,
 	}
 
 	event := NewEvent(UserCreated, payload)
-	return p.publishEvent(ctx, event)
-}
 
-func (p *EventProducer) publishEvent(ctx context.Context, event Event) error {
 	eventData, err := event.Serialize()
 	if err != nil {
 		return fmt.Errorf("event serialization error: %w", err)

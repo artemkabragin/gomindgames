@@ -54,25 +54,25 @@ type TokenResponse struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-type IUserHandler interface {
+type UserHandler interface {
 	PostRegister(c echo.Context) error
 	PostLogin(c echo.Context) error
 	PostRefresh(c echo.Context) error
 }
 
-type UserHandler struct {
-	userService  service.IUserService
-	tokenService service.ITokenService
+type UserHandlerImpl struct {
+	userService  service.UserService
+	tokenService service.TokenService
 }
 
-func NewUserHandler(userService service.IUserService, tokenService service.ITokenService) *UserHandler {
-	return &UserHandler{
+func NewUserHandler(userService service.UserService, tokenService service.TokenService) *UserHandlerImpl {
+	return &UserHandlerImpl{
 		userService:  userService,
 		tokenService: tokenService,
 	}
 }
 
-func (h *UserHandler) PostRegister(c echo.Context) error {
+func (h *UserHandlerImpl) PostRegister(c echo.Context) error {
 	var req UserCreateRequest
 	err := c.Bind(&req)
 	if err != nil {
@@ -117,7 +117,7 @@ func (h *UserHandler) PostRegister(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (h *UserHandler) PostLogin(c echo.Context) error {
+func (h *UserHandlerImpl) PostLogin(c echo.Context) error {
 	var req UserCreateRequest
 	err := c.Bind(&req)
 	if err != nil {
@@ -157,7 +157,7 @@ func (h *UserHandler) PostLogin(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
-func (h *UserHandler) PostRefresh(c echo.Context) error {
+func (h *UserHandlerImpl) PostRefresh(c echo.Context) error {
 	var req RefreshRequest
 	err := c.Bind(&req)
 	if err != nil {
