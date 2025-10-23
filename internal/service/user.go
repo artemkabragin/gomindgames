@@ -1,9 +1,11 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"mindgames/internal/domain"
+	"mindgames/internal/kafka"
 	"mindgames/internal/repository"
 
 	"github.com/google/uuid"
@@ -11,16 +13,18 @@ import (
 )
 
 type UserServiceImpl struct {
-	repo repository.IUserRepository
+	repo          repository.IUserRepository
+	eventProducer kafka.IEventProducer
 }
 
-func UserService(repo repository.IUserRepository) *UserServiceImpl {
+func UserService(repo repository.IUserRepository, eventProducer kafka.IEventProducer) *UserServiceImpl {
 	return &UserServiceImpl{
 		repo,
+		eventProducer,
 	}
 }
 
-func (s *UserServiceImpl) Create(user *domain.User, password string) error {
+func (s *UserServiceImpl) Create(ctx context.Context, user *domain.User, password string) error {
 	err := s.validateRegister(user, password)
 	if err != nil {
 		return fmt.Errorf("error validate register: %w", err)
@@ -39,6 +43,12 @@ func (s *UserServiceImpl) Create(user *domain.User, password string) error {
 
 	if err := s.repo.Create(user); err != nil {
 		return fmt.Errorf("error creating user: %w", err)
+	}
+
+	if err := s.eventProducer.PublishCreateUser(ctx, user); err != nil {
+		fmt.Printf("Error publishing user creation event: %v", err)
+	} else {
+		fmt.Printf("User creation event published: %s (%s)", user.Username, user.ID)
 	}
 
 	return nil

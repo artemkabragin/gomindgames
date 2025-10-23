@@ -85,7 +85,10 @@ func (h *UserHandler) PostRegister(c echo.Context) error {
 		IsOnboardingComplete: false,
 	}
 
-	err = h.userService.Create(&user, req.Password)
+	request := c.Request()
+	ctx := request.Context()
+
+	err = h.userService.Create(ctx, &user, req.Password)
 	if err != nil {
 		return c.JSON(makeErrorResponse(Unknown))
 	}

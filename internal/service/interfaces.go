@@ -1,11 +1,12 @@
 package service
 
 import (
+	"context"
 	"mindgames/internal/domain"
 )
 
 type IUserService interface {
-	Create(user *domain.User, password string) error
+	Create(ctx context.Context, user *domain.User, password string) error
 	GetByUsername(username string) (*domain.User, error)
 }
 

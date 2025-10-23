@@ -3,9 +3,10 @@ package main
 import (
 	"log"
 	"mindgames/internal/controller"
+	"mindgames/internal/kafka"
 	"mindgames/internal/repository"
 	"os"
-	"sync"
+	"strings"
 )
 
 func main() {
@@ -21,16 +22,27 @@ func main() {
 		},
 	)
 
+	kafkaConfig := kafka.KafkaConfig{
+		Brokers: strings.Split(getEnvOrDefault("KAFKA_BROKERS", "kafka:9091"), ","),
+		Topic:   getEnvOrDefault("KAFKA_TOPIC", "uesr-events"),
+		GroupID: getEnvOrDefault("KAFKA_GROUP_ID", "user-service"),
+	}
+
+	kafkaClient, err := kafka.NewKafkaClient(kafkaConfig)
+	if err != nil {
+		log.Fatalf("Failed to initialize Kafka: %s", err.Error())
+	}
+	defer kafkaClient.Close()
+	log.Println("Successfully connected to Kafka as producer")
+
 	controller := controller.NewController(controller.ControllerOptions{
-		DB: db,
+		DB:          db,
+		KafkaClient: kafkaClient,
 	})
 
 	if controller == nil {
 		log.Fatal("Failed to start controller")
 	}
-
-	// Keep the main goroutine alive
-	select {}
 }
 
 func getEnvOrDefault(key, defaultValue string) string {
