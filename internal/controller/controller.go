@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"mindgames/internal/handler"
 	"mindgames/internal/kafka"
 	"mindgames/internal/repository"
@@ -13,12 +14,12 @@ import (
 
 type ControllerOptions struct {
 	DB          *gorm.DB
-	KafkaClient kafka.IKafkaClient
+	KafkaClient kafka.KafkaClient
 }
 
 type Controller struct {
 	db          *gorm.DB
-	kafkaClient kafka.IKafkaClient
+	kafkaClient kafka.KafkaClient
 	userService service.UserService
 	userHandler handler.UserHandler
 }
@@ -28,12 +29,16 @@ func NewController(opts ControllerOptions) *Controller {
 	tokenRepo := repository.NewTokenRepository(opts.DB)
 
 	eventProducer := kafka.NewEventProducer(opts.KafkaClient)
+	eventConsumer := kafka.NewEventConsumer(opts.KafkaClient)
 
 	userService := service.NewUserService(userRepo, eventProducer)
 	tokenService := service.NewTokenService(tokenRepo)
 
 	userHandler := handler.NewUserHandler(userService, tokenService)
 	testHandler := handler.NewTestHandler()
+
+	consumerCtx, _ := context.WithCancel(context.Background())
+	eventConsumer.StartConsuming(consumerCtx)
 
 	e := initEcho()
 

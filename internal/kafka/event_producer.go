@@ -12,10 +12,10 @@ type EventProducer interface {
 }
 
 type EventProducerImpl struct {
-	client IKafkaClient
+	client KafkaClient
 }
 
-func NewEventProducer(client IKafkaClient) *EventProducerImpl {
+func NewEventProducer(client KafkaClient) *EventProducerImpl {
 	return &EventProducerImpl{
 		client: client,
 	}

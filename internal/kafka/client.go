@@ -15,18 +15,20 @@ type KafkaConfig struct {
 	GroupID string
 }
 
-type IKafkaClient interface {
+type KafkaClient interface {
 	Close() error
 	Publish(ctx context.Context, key string, value []byte) error
+	Subscribe(ctx context.Context, handler func(ctx context.Context, msg []byte) error)
 }
 
-type KafkaClient struct {
+type KafkaClientImpl struct {
 	writer *kafka.Writer
+	reader *kafka.Reader
 	config KafkaConfig
 }
 
-func NewKafkaClient(cfg KafkaConfig) (*KafkaClient, error) {
-	client := &KafkaClient{
+func NewKafkaClient(cfg KafkaConfig) (*KafkaClientImpl, error) {
+	client := &KafkaClientImpl{
 		config: cfg,
 	}
 
@@ -37,6 +39,18 @@ func NewKafkaClient(cfg KafkaConfig) (*KafkaClient, error) {
 		BatchTimeout: 10 * time.Millisecond,
 		RequiredAcks: kafka.RequireOne,
 	}
+
+	client.reader = kafka.NewReader(kafka.ReaderConfig{
+		Brokers:        cfg.Brokers,
+		Topic:          cfg.Topic,
+		GroupID:        cfg.GroupID,
+		MinBytes:       10e3, // 10KB
+		MaxBytes:       10e6, // 10MB
+		MaxWait:        time.Second,
+		StartOffset:    kafka.FirstOffset,
+		CommitInterval: time.Second,
+	})
+
 	log.Printf("Configured Kafka producer for topic %s", cfg.Topic)
 
 	log.Printf("Checking the connection to the Kafka broker %s...", cfg.Brokers[0])
@@ -50,7 +64,7 @@ func NewKafkaClient(cfg KafkaConfig) (*KafkaClient, error) {
 	return client, nil
 }
 
-func (k *KafkaClient) Close() error {
+func (k *KafkaClientImpl) Close() error {
 	if k.writer != nil {
 		log.Println("Kafka Producer Shutdown...")
 		err := k.writer.Close()
@@ -63,7 +77,7 @@ func (k *KafkaClient) Close() error {
 	return nil
 }
 
-func (k *KafkaClient) Publish(ctx context.Context, key string, value []byte) error {
+func (k *KafkaClientImpl) Publish(ctx context.Context, key string, value []byte) error {
 	if k.writer == nil {
 		return fmt.Errorf("the client is not configured as a producer")
 	}
@@ -82,4 +96,32 @@ func (k *KafkaClient) Publish(ctx context.Context, key string, value []byte) err
 
 	log.Printf("Key message '%s' successfully sent", key)
 	return nil
+}
+
+func (k *KafkaClientImpl) Subscribe(
+	ctx context.Context,
+	handler func(ctx context.Context, msg []byte) error,
+) {
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				msg, err := k.reader.ReadMessage(ctx)
+				if err != nil {
+					log.Printf("Error reading message from Kafka: %v", err)
+					time.Sleep(time.Second)
+					continue
+				}
+
+				log.Printf("Received message from topic %s with key: %s", msg.Topic, string(msg.Key))
+
+				if err := handler(ctx, msg.Value); err != nil {
+					log.Printf("Error processing message: %v", err)
+					continue
+				}
+			}
+		}
+	}()
 }

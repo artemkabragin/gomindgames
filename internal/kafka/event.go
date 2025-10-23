@@ -33,3 +33,11 @@ func (e *Event) Serialize() ([]byte, error) {
 	}
 	return data, nil
 }
+
+func DeserializeEvent(data []byte) (*Event, error) {
+	var event Event
+	if err := json.Unmarshal(data, &event); err != nil {
+		return nil, fmt.Errorf("error deserializing event: %w", err)
+	}
+	return &event, nil
+}
