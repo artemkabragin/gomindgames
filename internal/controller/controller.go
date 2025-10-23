@@ -24,7 +24,7 @@ type Controller struct {
 	userHandler handler.UserHandler
 }
 
-func NewController(opts ControllerOptions) *Controller {
+func NewController(ctx context.Context, opts ControllerOptions) *Controller {
 	userRepo := repository.NewUserRepository(opts.DB)
 	tokenRepo := repository.NewTokenRepository(opts.DB)
 
@@ -37,8 +37,7 @@ func NewController(opts ControllerOptions) *Controller {
 	userHandler := handler.NewUserHandler(userService, tokenService)
 	testHandler := handler.NewTestHandler()
 
-	consumerCtx, _ := context.WithCancel(context.Background())
-	eventConsumer.StartConsuming(consumerCtx)
+	eventConsumer.StartConsuming(ctx)
 
 	e := initEcho()
 

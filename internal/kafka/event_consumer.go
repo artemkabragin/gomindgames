@@ -33,8 +33,7 @@ func (ec *EventConsumer) processMessage(ctx context.Context, msgData []byte) err
 	case UserCreated:
 		return ec.handleUserCreatedEvent(ctx, event)
 	default:
-		log.Printf("Unknown event type: %s", event.Type)
-		return nil
+		return fmt.Errorf("unknown event type: %s", event.Type)
 	}
 }
 

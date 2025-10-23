@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"mindgames/internal/controller"
 	"mindgames/internal/kafka"
@@ -11,6 +12,10 @@ import (
 
 func main() {
 	log.Println("Starting application...")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	var db = repository.NewGormDB(
 		repository.Config{
 			Host:     getEnvOrDefault("DB_HOST", "localhost"),
@@ -22,26 +27,38 @@ func main() {
 		},
 	)
 
+	brokers := strings.Split(getEnvOrDefault("KAFKA_BROKERS", "kafka:9091"), ",")
 	kafkaConfig := kafka.KafkaConfig{
-		Brokers: strings.Split(getEnvOrDefault("KAFKA_BROKERS", "kafka:9091"), ","),
+		Brokers: brokers,
 		Topic:   getEnvOrDefault("KAFKA_TOPIC", "user-events"),
 		GroupID: getEnvOrDefault("KAFKA_GROUP_ID", "user-service"),
 	}
 
-	kafkaClient, err := kafka.NewKafkaClient(kafkaConfig)
+	kafkaCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	kafkaClient, err := kafka.NewKafkaClient(kafkaCtx, kafkaConfig)
 	if err != nil {
-		log.Fatalf("Failed to initialize Kafka: %s", err.Error())
+		log.Fatalf("failed to initialize Kafka: %s", err.Error())
 	}
 	defer kafkaClient.Close()
 	log.Println("Successfully connected to Kafka as producer")
 
-	controller := controller.NewController(controller.ControllerOptions{
+	consumerCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	controllerOptions := controller.ControllerOptions{
 		DB:          db,
 		KafkaClient: kafkaClient,
-	})
+	}
+
+	controller := controller.NewController(
+		consumerCtx,
+		controllerOptions,
+	)
 
 	if controller == nil {
-		log.Fatal("Failed to start controller")
+		log.Fatal("failed to start controller")
 	}
 }
 

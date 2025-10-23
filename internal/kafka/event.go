@@ -29,7 +29,7 @@ func NewEvent(eventType EventType, payload interface{}) Event {
 func (e *Event) Serialize() ([]byte, error) {
 	data, err := json.Marshal(e)
 	if err != nil {
-		return nil, fmt.Errorf("\nerror serializing event: %w", err)
+		return nil, fmt.Errorf("error serializing event: %w", err)
 	}
 	return data, nil
 }

@@ -27,7 +27,7 @@ type KafkaClientImpl struct {
 	config KafkaConfig
 }
 
-func NewKafkaClient(cfg KafkaConfig) (*KafkaClientImpl, error) {
+func NewKafkaClient(ctx context.Context, cfg KafkaConfig) (*KafkaClientImpl, error) {
 	client := &KafkaClientImpl{
 		config: cfg,
 	}
@@ -54,7 +54,7 @@ func NewKafkaClient(cfg KafkaConfig) (*KafkaClientImpl, error) {
 	log.Printf("Configured Kafka producer for topic %s", cfg.Topic)
 
 	log.Printf("Checking the connection to the Kafka broker %s...", cfg.Brokers[0])
-	conn, err := kafka.DialLeader(context.Background(), "tcp", cfg.Brokers[0], cfg.Topic, 0)
+	conn, err := kafka.DialLeader(ctx, "tcp", cfg.Brokers[0], cfg.Topic, 0)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to Kafka: %w", err)
 	}
@@ -111,7 +111,6 @@ func (k *KafkaClientImpl) Subscribe(
 				msg, err := k.reader.ReadMessage(ctx)
 				if err != nil {
 					log.Printf("Error reading message from Kafka: %v", err)
-					time.Sleep(time.Second)
 					continue
 				}
 
