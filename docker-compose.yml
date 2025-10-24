@@ -6,6 +6,7 @@ services:
     ports:
       - "8081:8081"
     depends_on:
+      - kafka
       - db
     environment:
       - DB_HOST=db
@@ -14,6 +15,11 @@ services:
       - DB_PASSWORD=1337
       - DB_NAME=auth_database
       - DB_SSLMODE=disable
+      - KAFKA_BROKERS=kafka:9091
+      - KAFKA_TOPIC=user-events
+      - KAFKA_GROUP_ID=user-service
+    networks:
+      - mind-games-net
 
   db:
     image: postgres:14.5-alpine
@@ -26,6 +32,58 @@ services:
       - POSTGRES_PASSWORD=1337
       - POSTGRES_USER=artembragin
       - POSTGRES_DB=auth_database
+    networks:
+      - mind-games-net
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.3
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - mind-games-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.3
+    hostname: kafka
+    container_name: kafka
+    ports:
+      - "9091:9091"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9091,PLAINTEXT_HOST://localhost:29091
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks:
+      - mind-games-net
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "9020:8080"
+    depends_on:
+      - kafka
+    environment:
+      AUTH_TYPE: DISABLED
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9091
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - mind-games-net
+
+networks:
+  mind-games-net:
+    driver: bridge
 
 volumes:
   postgres_data:

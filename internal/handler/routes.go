@@ -10,14 +10,14 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type ITestHandler interface {
+type TestHandler interface {
 	GetTest(c echo.Context) error
 }
 
 type TestHandlerImpl struct {
 }
 
-func TestHandler() ITestHandler {
+func NewTestHandler() TestHandler {
 	return &TestHandlerImpl{}
 }
 
